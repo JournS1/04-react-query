@@ -1,22 +1,31 @@
-import axios from "axios";
-import type { Movie } from "../types/movie"
+import axios, { type AxiosInstance } from "axios";
+import type { Movie } from "../types/movie";
 
-interface MovieRes {
-    results: Movie[]
+const api: AxiosInstance = axios.create({
+  baseURL: "https://api.themoviedb.org/3",
+  headers: {
+    accept: "application/json",
+    Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}`,
+  },
+});
+
+export interface TmdbSearchResponse {
+  page: number;
+  results: Movie[];
+  total_results: number;
+  total_pages: number;
 }
 
-const token = import.meta.env.VITE_TMDB_TOKEN;
- 
-export default async function fetchMovies(search: string): Promise<Movie[]> {
-    const getMovie = await axios.get<MovieRes>(`https://api.themoviedb.org/3/search/movie`, {
-        params: {
-            query: search,
-        },
-        headers: {
-            accept: 'application/json',
-            Authorization: `Bearer ${token}`,
-        }
-    });
+export async function fetchMovies(query: string, page: number): Promise<TmdbSearchResponse> {
+  const { data } = await api.get<TmdbSearchResponse>("/search/movie", {
+    params: { query, page, language: "uk-UA", include_adult: false },
+  });
+  return data;
+}
 
-    return getMovie.data.results;
-};
+export function buildImg(
+  path: string | null,
+  size: "w92" | "w154" | "w185" | "w342" | "w500" | "w780" | "original" = "w500"
+): string | null {
+  return path ? `https://image.tmdb.org/t/p/${size}${path}` : null;
+}
